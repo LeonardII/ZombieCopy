@@ -79,6 +79,8 @@ function Pistol() {
             cooldownRemaining = cooldown;
             this.bulletsInChamber--;
 
+            sfxGun1.play();
+
             let directionCamera = new THREE.Vector3(0, 0, 0);
             camera.getWorldDirection(directionCamera);
             //RAYCASTING

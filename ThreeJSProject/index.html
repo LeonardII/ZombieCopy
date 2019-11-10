@@ -90,6 +90,9 @@
             bulletsStoredText = document.getElementById('bulletsStored'),
             sfxElectricity = new Audio('sounds/sfx_electricity.mp3'),
             sfxAmbient = new Audio('sounds/ambient/ambi_1-5_combined.mp3'),
+            sfxGun1 = new Audio('sounds/gun/gun1.mp3'),
+            sfxGun2 = new Audio('sounds/gun/gun2.mp3'),
+            sfxGun3 = new Audio('sounds/gun/gun3.mp3'),
             scoreText = document.getElementById('score'),
             score,
             isFlickering,
@@ -228,7 +231,7 @@
             score = 0;
 
             //sfxAmbient.setVolume(0.7);
-            //sfxAmbient.setLoop(true);
+            sfxAmbient.loop = true;
             sfxAmbient.play();
 
             setupMap(scene);
