@@ -1,13 +1,6 @@
-function Zombie(startPosition, walkDirection, running, listener) {
+function Zombie(listener) {
     var object = this;
-    this.startPosition = startPosition.clone();
-    this.running = running;
-    walkDirection.normalize();
-    if(running){
-        this.walkDirection = walkDirection.multiplyScalar(0.07);
-    }else{
-        this.walkDirection = walkDirection.multiplyScalar(0.01);
-    }
+    
     this.wait = 0;
     this.animations = [];
     this.mesh = null;
@@ -17,11 +10,10 @@ function Zombie(startPosition, walkDirection, running, listener) {
     this.attacking = false;
 
     this.sound = new THREE.PositionalAudio( listener );
-
-
+    
     this.despawnTime;
 
-    this.load = function(scene)  {
+    this.load = function()  {
         var loader = new THREE.GLTFLoader();
         loader.load( './models/zombie1/scene.gltf', function ( gltf ) {
             object.mesh = gltf.scene;
@@ -30,22 +22,7 @@ function Zombie(startPosition, walkDirection, running, listener) {
                 roughness: 0.1,
                 color: 0xffffff
             });
-            let modelOrientation = new THREE.Vector3(0,0,-1);
-            if(object.walkDirection.x <= 0){
-                object.mesh.rotation.y = modelOrientation.angleTo(object.walkDirection) + Math.PI;  
-            }else{
-                object.mesh.rotation.y = -modelOrientation.angleTo(object.walkDirection) + Math.PI;  
-            }
-            
-            object.wait = Math.random()*10.0 + 5.0;
                          
-            object.mesh.position.x = object.startPosition.x;
-            object.mesh.position.y = object.startPosition.y;
-            object.mesh.position.z = object.startPosition.z;
-            scene.add(object.mesh);
-
-            object.mixer = new THREE.AnimationMixer( object.mesh );
-            object.mixer.clipAction( gltf.animations[0] ).play();
             object.animations = gltf.animations;
 
             var audioLoader = new THREE.AudioLoader();
@@ -64,11 +41,9 @@ function Zombie(startPosition, walkDirection, running, listener) {
                 case 8: soundName = 'zombieSound9.mp3'; break;
             }
             audioLoader.load( 'sounds/zombie/'+soundName, function( buffer ) {
-                console.log("start loading sound");
                 object.sound.setBuffer( buffer );
                 object.sound.setRefDistance( 1 );
                 object.mesh.add(object.sound);
-                console.log("loaded sound");
             });
 
         }, undefined, function ( e ) {
@@ -76,6 +51,33 @@ function Zombie(startPosition, walkDirection, running, listener) {
         } );
 
         
+    }
+    this.spawn = function(scene,startPosition, walkDirection, running)
+    {
+        object.startPosition = startPosition.clone();
+        object.running = running;
+        walkDirection.normalize();
+        if(running){
+            object.walkDirection = walkDirection.multiplyScalar(0.07);
+        }else{
+            object.walkDirection = walkDirection.multiplyScalar(0.01);
+        }
+        let modelOrientation = new THREE.Vector3(0,0,-1);
+        if(object.walkDirection.x <= 0){
+            object.mesh.rotation.y = modelOrientation.angleTo(object.walkDirection) + Math.PI;  
+        }else{
+            object.mesh.rotation.y = -modelOrientation.angleTo(object.walkDirection) + Math.PI;  
+        }
+        
+        object.wait = Math.random()*10.0 + 5.0;
+                    
+        object.mesh.position.x = object.startPosition.x;
+        object.mesh.position.y = object.startPosition.y;
+        object.mesh.position.z = object.startPosition.z;
+        scene.add(object.mesh);
+
+        object.mixer = new THREE.AnimationMixer( object.mesh );
+        object.mixer.clipAction( object.animations[0] ).play();
     }
     this.die = function()
     {

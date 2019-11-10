@@ -29,7 +29,7 @@
             width: 100%;
             position: absolute;
             font-family: monospace;
-            font-size: 60px;
+            font-size: 50px;
             color: white;
             text-align: center;
         }
@@ -46,7 +46,7 @@
         #bulletsStored {
             position: absolute;
             font-family: monospace;
-            right: 100px;
+            right: 85px;
             bottom: 20px;
             font-size: 40px;
             color: white;
@@ -210,7 +210,7 @@
             document.addEventListener('keydown',
                 function (event) {
                     switch (event.keyCode) {
-                        case 69: isAiming = true; break;
+                        case 69: isAiming = !isAiming; break;
                         case 81: if (pistol.trytoShoot(camera, zombieController.getZombies()) == true) {
                             timeHitmarkerActiveCopy = timeHitmarkerActive;
                         }
@@ -218,9 +218,9 @@
                         case 82: pistol.trytoReload(); break;
                     }
                 }, false);
-            document.addEventListener('keyup', function (event) {
+            /*document.addEventListener('keyup', function (event) {
                 switch (event.keyCode) { case 69: isAiming = false; }
-            }, false);
+            }, false);*/
         }
         function start() {
             lights = new Array(4);
@@ -245,7 +245,7 @@
             setupLights(scene);
             pistol = new Pistol();
             pistol.load(scene);
-            zombieController.load(scene);
+            zombieController.load(listener);
             setupInputs();
         }
 

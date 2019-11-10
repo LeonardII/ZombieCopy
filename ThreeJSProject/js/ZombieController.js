@@ -19,12 +19,14 @@ function ZombieController() {
     this.zombies[2] = [];
     this.zombies[3] = [];
 
-    this.loadedZombies = new Array(100);
+    this.loadedZombies = new Array(25); //max of zombies 
 
 
-
-    this.load = function(scene)  {
-        
+    this.load = function(listener)  {
+        for(let i = 0; i < object.loadedZombies.length ; i++) {
+            object.loadedZombies[i] = new Zombie(listener);
+            object.loadedZombies[i].load();
+        }
     }
 
 
@@ -49,7 +51,9 @@ function ZombieController() {
                 object.zombies[l][i].update(timeDelta);
                 if(object.zombies[l][i].canDespawn(timeFixed)){
                     scene.remove(object.zombies[l][i]);
-                    object.zombies[l].splice(i, 1);
+                    let z = object.zombies[l].splice(i, 1)[0];
+                    object.loadedZombies.push(z);
+                    console.log("loadedzombies: ",object.loadedZombies.length);
                 }
             }
         }
@@ -60,11 +64,14 @@ function ZombieController() {
     }
 
     function spawnZombie(lane, running){
+        console.log("loadedzombies: ",object.loadedZombies.length);
         let direction = new THREE.Vector3(0,0,-1);
         direction.applyAxisAngle(new THREE.Vector3(0,1,0), Math.PI/2*lane);
-        let z = new Zombie(spawnPoints[lane],direction,running,listener);
+        let z = object.loadedZombies.pop();
+        console.log(z);
+        if(!z) console.log("EROORRRRRRRR");
+        z.spawn(scene,spawnPoints[lane],direction,running);
         object.zombies[lane].push(z);
-        z.load(scene);
     }
 
     function calculateDeltaZombieSpawnTime(timeFixed)
