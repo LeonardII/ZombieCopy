@@ -1,0 +1,50 @@
+<html>
+    <head>
+        <script src="js/three.js"></script>
+        <style>
+            body {margin: 0%; }
+            canvas {width: 100%; height: 100%; display: block;}
+        </style>
+    </head>
+    <body>
+            <canvas id="myCanvas"> </canvas>
+        <script>
+            //SCENE
+            scene = new THREE.Scene();
+            //RENDERER
+            renderer = new THREE.WebGLRenderer({
+                canvas: myCanvas,
+                antialias: true
+            });
+            renderer.setClearColor(0x000000);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            //CAMERA
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 1.7, 0);
+            var start = function()
+            {
+            };
+            var update = function()
+            {
+            };
+            //Draws the scene using the camera.
+            var render = function()
+            {
+                renderer.render(scene, camera);
+            };
+            //Technically the base update function. Calls Update, Render...
+            var loopGame = function()
+            {
+                requestAnimationFrame(loopGame);
+                update();
+                render();
+            };
+            start();
+            loopGame();
+        </script>
+    </body>
+</html>
+

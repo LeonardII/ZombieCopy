@@ -1,0 +1,381 @@
+<html>
+
+<head>
+    <title>Ultimate Zombie Slasher 2</title>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        img.aimUI {
+            position: absolute;
+            display: block;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            margin-left: auto;
+            margin-right: auto;
+
+        }
+
+        #myCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        #score {
+            width: 100%;
+            position: absolute;
+            font-family: monospace;
+            font-size: 60px;
+            color: white;
+            text-align: center;
+        }
+
+        #bulletsInChamber {
+            position: absolute;
+            font-family: monospace;
+            right: 120px;
+            bottom: 30px;
+            font-size: 60px;
+            color: white;
+        }
+
+        #bulletsStored {
+            position: absolute;
+            font-family: monospace;
+            right: 100px;
+            bottom: 20px;
+            font-size: 40px;
+            color: white;
+        }
+    </style>
+
+    <script src="js/three.js"></script>
+    <script src="js/GLTFLoader.js"></script>
+    <script src="js/FBXLoader.js"></script>
+    <script src="js/inflate.min.js"></script>
+    <script src="js/PointerLockControls.js"></script>
+    <script src="js/OrbitControls.js"></script>
+    <script src="js/Zombie.js"></script>
+    <script src="js/Pistol.js"></script>
+    <script src="js/ZombieController.js"></script>
+</head>
+
+<body>
+    <img id="imgCrosshair" ; class="aimUI" ; src="img/Crosshair.png">
+    <img id="imgHitmarker" ; class="aimUI" ; src="img/Hitmarker.png">
+    <div id="score"> 0 </div>
+    <div id="bulletsInChamber"> 0/</div>
+    <div id="bulletsStored"> 0 </div>
+    <canvas id="myCanvas">
+    </canvas>
+    
+    <script>
+
+        var renderer,
+            bulbLight,
+            isFlickering,
+            timeFlickerPassed,
+            timesLighton,
+            clock,
+            scene,
+            camera,
+            lights,
+            crosshairImg = document.getElementById('imgCrosshair'),
+            hitmarkerImg = document.getElementById('imgHitmarker'),
+            bulletsInChamberText = document.getElementById('bulletsInChamber'),
+            bulletsStoredText = document.getElementById('bulletsStored'),
+            sfxElectricity = new Audio('sounds/sfx_electricity.mp3'),
+            sfxAmbient = new Audio('sounds/ambient/ambi_1-5_combined.mp3'),
+            scoreText = document.getElementById('score'),
+            score,
+            isFlickering,
+            timeFlickerPassed,
+            timesLighton,
+            pistol,
+            zombieController,
+            damage,
+            isAiming,
+            myCanvas = document.getElementById('myCanvas');
+        var timeFixed = 0;
+        const timeUntilEventOccuring = 0.7;
+        const timeFlicker = 0.6;
+        const timeLighton = 0.75;
+        const timeHitmarkerActive = 0.1;
+        const chanceFlicker = 0.15;
+        const intensityMax = 4;
+        const chanceSfxElectricity = 0.1;
+        var timeUntilEventOccuringCopy = 0, timeHitmarkerActiveCopy = 0;
+        const life = 2.0; // Seconds you survive while being under attack;
+
+        function getCrossProduct(vector1, vector2) {
+            return new THREE.Vector3(vector1.y * vector2.z - vector2.y * vector1.z, vector1.x * vector2.z - vector2.x * vector1.z, vector1.x * vector2.y - vector2.x * vector1.y);
+        }
+        zombieController = new ZombieController();
+
+        function init() {
+            //SCENE
+            scene = new THREE.Scene();
+            //RENDERER
+            renderer = new THREE.WebGLRenderer({
+                canvas: myCanvas,
+                antialias: true
+            });
+            renderer.setClearColor(0x000000);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            //CAMERA
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 1.7, 0);
+            //CLOCK
+            clock = new THREE.Clock();
+
+            var controls = new THREE.PointerLockControls(camera);
+            myCanvas.addEventListener('click', function () {
+                controls.lock();
+            });
+            window.addEventListener('resize', function () {
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+            }
+            );
+            //var controls = new THREE.OrbitControls(camera, renderer.domElement);
+            start();
+        }
+
+        function setupMap(scene) {
+            let loader = new THREE.GLTFLoader();
+            var mesh;
+            loader.load('models/MapBig.glb', function (gltf) {
+                mesh = gltf.scene;
+                mesh.children[0].material = new THREE.MeshStandardMaterial({
+                    roughness: 0.7,
+                    color: 0xffffff,
+                    metalness: 0.2
+                });
+                scene.add(mesh);
+                mesh.position.set(1.5, 0, 1.5);
+            });
+        }
+
+        function setupLights(scene) {
+            var bulbGeometry = new THREE.SphereBufferGeometry(0.02, 16, 8);
+            bulbLight = new THREE.PointLight(0xcc3333, 1, 100, 35);
+            var bulbGeometry = new THREE.SphereBufferGeometry(0.02, 16, 8);
+            bulbLight = new THREE.PointLight(0xcc3333, 1, 100, 35);
+
+            let bulbMat = new THREE.MeshStandardMaterial({
+                emissive: 0xcc3333,
+                emissiveIntensity: 1,
+                color: 0x000000
+            });
+            bulbLight.add(new THREE.Mesh(bulbGeometry, bulbMat));
+            bulbLight.position.set(0, 2.5, 0);
+            scene.add(bulbLight);
+
+            for (let pathIndex = 0; pathIndex < 4; pathIndex++) {
+                lights[pathIndex] = new Array(3);
+                for (let lightIndex = 0; lightIndex < 3; lightIndex++) {
+                    lights[pathIndex][lightIndex] = new THREE.PointLight(0xffcccc, intensityMax, 100, 30);
+                    switch (pathIndex) {
+                        case 0: lights[pathIndex][lightIndex].position.set(0, 2.5, 10 * (lightIndex + 1)); break;
+                        case 1: lights[pathIndex][lightIndex].position.set(0, 2.5, -10 * (lightIndex + 1)); break;
+                        case 2: lights[pathIndex][lightIndex].position.set(10 * (lightIndex + 1), 2.5, 0); break;
+                        case 3: lights[pathIndex][lightIndex].position.set(-10 * (lightIndex + 1), 2.5, 0); break;
+                    }
+                    lights[pathIndex][lightIndex].intensity = 0;
+                    scene.add(lights[pathIndex][lightIndex]);
+                }
+            }
+            //light = new THREE.PointLight(0xffffff, 3, 100, 1);
+            //scene.add(light); 
+        }
+        function setupInputs() {
+            document.addEventListener('keydown',
+                function (event) {
+                    switch (event.keyCode) {
+                        case 69: isAiming = true; break;
+                        case 81: if (pistol.trytoShoot(camera, zombieController.getZombies()) == true) {
+                            timeHitmarkerActiveCopy = timeHitmarkerActive;
+                        }
+                            break;
+                        case 82: pistol.trytoReload(); break;
+                    }
+                }, false);
+            document.addEventListener('keyup', function (event) {
+                switch (event.keyCode) { case 69: isAiming = false; }
+            }, false);
+        }
+        function start() {
+            lights = new Array(4);
+            isFlickering = [false, false, false, false,
+                false, false, false, false,
+                false, false, false, false];
+            timeFlickerPassed = [0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0];
+            timesLighton = [0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0];
+
+            damage = 0;
+            score = 0;
+
+            //sfxAmbient.setVolume(0.7);
+            //sfxAmbient.setLoop(true);
+            sfxAmbient.play();
+
+            setupMap(scene);
+            setupLights(scene);
+            pistol = new Pistol();
+            pistol.load(scene);
+            zombieController.load(scene);
+            setupInputs();
+        }
+
+        function gameLoop() {
+            requestAnimationFrame(gameLoop);
+            timeDelta = timeFixed;
+            timeFixed += clock.getDelta();
+            timeDelta = timeFixed - timeDelta;
+
+            update();
+            render();
+        }
+        function updatePistol() {
+
+            bulletsInChamberText.textContent = pistol.bulletsInChamber.toString() + '/';
+            bulletsStoredText.textContent = pistol.bulletsStored;
+
+            let directionCamera = new THREE.Vector3(0, 0, 0);
+            var axis = new THREE.Vector3(0, 1, 0);
+            camera.getWorldDirection(directionCamera);
+
+            pistol.mesh.position.set(
+                camera.position.x + directionCamera.x,
+                camera.position.y + directionCamera.y - 0.3,
+                camera.position.z + directionCamera.z,
+            );
+
+            let vectorSide = getCrossProduct(axis, directionCamera);
+            vectorSide = vectorSide.normalize();
+            pistol.mesh.position.set(
+                pistol.mesh.position.x - vectorSide.x * 0.2,
+                pistol.mesh.position.y - vectorSide.y * 0.2,
+                pistol.mesh.position.z - vectorSide.z * 0.2
+            );
+            pistol.mesh.rotation.set(camera.rotation.x, camera.rotation.y, camera.rotation.z);
+            pistol.mesh.rotateY(95 / 180 * Math.PI);
+
+            crosshairImg.style.visibility = 'visible';
+
+            if (pistol.reloadTimeRemaining > 0) {
+                if (pistol.reloadTimeRemaining > 0.5 * pistol.timetoReload) {
+                    pistol.mesh.position.y -= 1 * (pistol.timetoReload - pistol.reloadTimeRemaining);
+
+                }
+                else {
+                    pistol.mesh.position.y -= 1 * (pistol.reloadTimeRemaining);
+                }
+            }
+            else {
+                if (isAiming == true) {
+                    pistol.mesh.position.set(
+                        camera.position.x + directionCamera.x,
+                        camera.position.y + directionCamera.y - 0.2,
+                        camera.position.z + directionCamera.z,
+                    );
+                    pistol.mesh.rotation.set(camera.rotation.x, camera.rotation.y, camera.rotation.z);
+                    pistol.mesh.rotateY(90 / 180 * Math.PI);
+
+                    crosshairImg.style.visibility = 'hidden';
+                }
+                else {
+                }
+            }
+        }
+        function trytoFlicker(pathIndex, lightIndex) {
+
+            index = pathIndex * lights.length + lightIndex;
+            if (timesLighton[index] > 0) {
+                lights[pathIndex][lightIndex].intensity = intensityMax;
+                timesLighton[index] += timeDelta;
+                if (timesLighton[index] >= timeLighton) {
+                    lights[pathIndex][lightIndex].intensity = 0;
+
+                    timesLighton[index] = 0;
+                    isFlickering[index] = false;
+                }
+            }
+            else {
+                if (isFlickering[index]) {
+                    timeFlickerPassed[index] += timeDelta;
+                    lights[pathIndex][lightIndex].intensity = intensityMax * (Math.sin(16 * Math.PI * timeFlickerPassed[index]) + 0.5);
+                }
+                if (timeFlickerPassed[index] >= timeFlicker) {
+                    timeFlickerPassed[index] = 0;
+                    timesLighton[index] += timeDelta;
+                }
+            }
+        }
+        function update() {
+            if (timeHitmarkerActiveCopy > 0) {
+                hitmarkerImg.style.visibility = 'visible';
+                timeHitmarkerActiveCopy -= timeDelta;
+            }
+            else {
+                hitmarkerImg.style.visibility = 'hidden';
+            }
+            bulbLight.intensity = intensityMax * Math.sin(timeFixed) + (intensityMax * 1.2);
+            //PISTOL
+            pistol.update(timeDelta);
+            updatePistol();
+            //ZOMBIES
+            zombieController.update(timeDelta,timeFixed, scene);
+            if(zombieController.isAttacking()){ 
+                damage += timeDelta;
+            }
+            if(damage > life){ //DEAD
+                location.reload();
+            }
+
+            scoreText.textContent = score;
+
+            //EVENTS
+            timeUntilEventOccuringCopy += timeDelta;
+            if (timeUntilEventOccuringCopy >= timeUntilEventOccuring) {
+                timeUntilEventOccuringCopy = 0;
+                //LIGHTS
+                for (let i = 0; i < lights.length * lights[0].length; i++) {
+                    if (Math.random() <= chanceFlicker) {
+                        isFlickering[i] = true;
+                    }
+                }
+
+                //SOUNDS
+                if(Math.random() <= chanceSfxElectricity)
+                {
+                    sfxElectricity.play();
+                }
+            }
+            for (let pathIndex = 0; pathIndex < 4; pathIndex++) {
+                for (let lightIndex = 0; lightIndex < 3; lightIndex++) {
+                    trytoFlicker(pathIndex, lightIndex);
+                }
+            }
+        }
+
+        function render() {
+            renderer.render(scene, camera);
+        }
+
+        init();
+        gameLoop();
+    </script>
+</body>
