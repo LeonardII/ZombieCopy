@@ -93,6 +93,7 @@
             sfxGun1 = new Audio('sounds/gun/gun1.mp3'),
             sfxGun2 = new Audio('sounds/gun/gun2.mp3'),
             sfxGun3 = new Audio('sounds/gun/gun3.mp3'),
+            sfxReload = new Audio('sounds/gun/reload.mp3'),
             scoreText = document.getElementById('score'),
             score,
             isFlickering,
@@ -102,6 +103,7 @@
             zombieController,
             damage,
             isAiming,
+            listener,
             myCanvas = document.getElementById('myCanvas');
         var timeFixed = 0;
         const timeUntilEventOccuring = 0.7;
@@ -112,7 +114,7 @@
         const intensityMax = 4;
         const chanceSfxElectricity = 0.1;
         var timeUntilEventOccuringCopy = 0, timeHitmarkerActiveCopy = 0;
-        const life = 2.0; // Seconds you survive while being under attack;
+        const life = 4.0; // Seconds you survive while being under attack;
 
         function getCrossProduct(vector1, vector2) {
             return new THREE.Vector3(vector1.y * vector2.z - vector2.y * vector1.z, vector1.x * vector2.z - vector2.x * vector1.z, vector1.x * vector2.y - vector2.x * vector1.y);
@@ -135,6 +137,11 @@
             //CAMERA
             camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
             camera.position.set(0, 1.7, 0);
+            
+            //SOUND
+            listener = new THREE.AudioListener();
+            camera.add( listener );
+
             //CLOCK
             clock = new THREE.Clock();
 

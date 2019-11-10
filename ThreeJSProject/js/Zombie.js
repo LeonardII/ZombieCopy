@@ -1,6 +1,5 @@
-function Zombie(startPosition, walkDirection, running, controller) {
+function Zombie(startPosition, walkDirection, running, listener) {
     var object = this;
-    //this.controller = controller;
     this.startPosition = startPosition.clone();
     this.running = running;
     walkDirection.normalize();
@@ -16,6 +15,8 @@ function Zombie(startPosition, walkDirection, running, controller) {
 
     this.dead = false;
     this.attacking = false;
+
+    this.sound = new THREE.PositionalAudio( listener );
 
 
     this.despawnTime;
@@ -46,9 +47,35 @@ function Zombie(startPosition, walkDirection, running, controller) {
             object.mixer = new THREE.AnimationMixer( object.mesh );
             object.mixer.clipAction( gltf.animations[0] ).play();
             object.animations = gltf.animations;
+
+            var audioLoader = new THREE.AudioLoader();
+            
+            let random = Math.floor(Math.random() * 8); //choose Random sound
+            let soundName;
+            switch(random){
+                case 0: soundName = 'zombieSound1.mp3'; break;
+                case 1: soundName = 'zombieSound2.mp3'; break;
+                case 2: soundName = 'zombieSound3.mp3'; break;
+                case 3: soundName = 'zombieSound4.mp3'; break;
+                case 4: soundName = 'zombieSound5.mp3'; break;
+                case 5: soundName = 'zombieSound6.mp3'; break;
+                case 6: soundName = 'zombieSound7.mp3'; break;
+                case 7: soundName = 'zombieSound8.mp3'; break;
+                case 8: soundName = 'zombieSound9.mp3'; break;
+            }
+            audioLoader.load( 'sounds/zombie/'+soundName, function( buffer ) {
+                console.log("start loading sound");
+                object.sound.setBuffer( buffer );
+                object.sound.setRefDistance( 1 );
+                object.mesh.add(object.sound);
+                console.log("loaded sound");
+            });
+
         }, undefined, function ( e ) {
             console.error( e );
         } );
+
+        
     }
     this.die = function()
     {
@@ -56,7 +83,13 @@ function Zombie(startPosition, walkDirection, running, controller) {
             score ++;
             object.dead = true;
             object.mixer.stopAllAction();
-            var animation = object.mixer.clipAction( object.animations[1] );
+            var animation;
+            
+            if (Math.random() < 0.3){
+                animation = object.mixer.clipAction( object.animations[2] );//Zombie fällt nach vorne
+            }else{
+                animation = object.mixer.clipAction( object.animations[1] );//Zombie fällt nach hinten
+            }
             animation.setLoop( THREE.LoopOnce );
             animation.clampWhenFinished = true;
             animation.enable = true;
@@ -98,7 +131,10 @@ function Zombie(startPosition, walkDirection, running, controller) {
                         object.mixer.clipAction( object.animations[0] ).play();
                         object.attacking = true;
                     }
-                }   
+                }  
+                if(Math.random() < timeDelta * 0.1){ //alle ~10 Sekunden ein Sound
+                    object.sound.play(); 
+                }
             }
         }
     }

@@ -41,6 +41,7 @@ function Pistol() {
     }
     this.trytoReload = function () {
         if (this.bulletsInChamber < magazineSize && this.reloadTimeRemaining <= 0) {
+            sfxReload.play();
             this.reloadTimeRemaining = this.timetoReload;
             return true;
         }

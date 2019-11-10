@@ -10,6 +10,7 @@ function ZombieController() {
     spawnPoints[2] = new THREE.Vector3(0, 0, -30);
     spawnPoints[3] = new THREE.Vector3(-30, 0, 0);
 
+
     this.lastZombieSpawnTime = 1;
 
     this.zombies = new Array(4);
@@ -18,10 +19,12 @@ function ZombieController() {
     this.zombies[2] = [];
     this.zombies[3] = [];
 
+    this.loadedZombies = new Array(100);
+
 
 
     this.load = function(scene)  {
-
+        
     }
 
 
@@ -59,7 +62,7 @@ function ZombieController() {
     function spawnZombie(lane, running){
         let direction = new THREE.Vector3(0,0,-1);
         direction.applyAxisAngle(new THREE.Vector3(0,1,0), Math.PI/2*lane);
-        let z = new Zombie(spawnPoints[lane],direction,running,this);
+        let z = new Zombie(spawnPoints[lane],direction,running,listener);
         object.zombies[lane].push(z);
         z.load(scene);
     }
