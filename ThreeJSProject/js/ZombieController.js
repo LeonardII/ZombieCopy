@@ -76,7 +76,7 @@ function ZombieController() {
 
     function calculateDeltaZombieSpawnTime(timeFixed)
     {
-        return  350/(timeFixed+30)+4;
+        return  350/(timeFixed+30)+1;
     }
 
     this.isAttacking = function()

@@ -42,7 +42,7 @@ function Zombie(listener) {
             }
             audioLoader.load( 'sounds/zombie/'+soundName, function( buffer ) {
                 object.sound.setBuffer( buffer );
-                object.sound.setRefDistance( 1 );
+                object.sound.setRefDistance( 3 );
                 object.mesh.add(object.sound);
             });
 
